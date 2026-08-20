@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Volume2, Sparkles } from 'lucide-react';
+import { Heart, Volume2, Sparkles, Box } from 'lucide-react';
 import type { Pokemon } from '../../types/pokemon';
 import { getTypeGradient } from '../../utils/typeColors';
 import { capitalize, formatId, getPokemonImage } from '../../utils/formatters';
@@ -10,6 +10,7 @@ interface PokemonCardProps {
   isFavorite?: boolean;
   onToggleFavorite?: (pokemonId: number) => void;
   onClick: (pokemon: Pokemon) => void;
+  onOpen3DViewer?: (pokemon: Pokemon) => void;
 }
 
 export const PokemonCard: React.FC<PokemonCardProps> = ({
@@ -17,6 +18,7 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   isFavorite = false,
   onToggleFavorite,
   onClick,
+  onOpen3DViewer,
 }) => {
   const [isShiny, setIsShiny] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -35,6 +37,15 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
   const handleShinyToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsShiny((prev) => !prev);
+  };
+
+  const handle3DViewClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onOpen3DViewer) {
+      onOpen3DViewer(pokemon);
+    } else {
+      onClick(pokemon);
+    }
   };
 
   const handlePlayCry = (e: React.MouseEvent) => {
@@ -72,18 +83,29 @@ export const PokemonCard: React.FC<PokemonCardProps> = ({
       tabIndex={0}
       onClick={() => onClick(pokemon)}
       onKeyDown={handleKeyDown}
-      className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br ${gradientClass} p-0.5 shadow-lg hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 cursor-pointer focus:outline-none focus:ring-4 focus:ring-red-400/50 flex flex-col justify-between`}
+      className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br ${gradientClass} p-0.5 shadow-lg transition-all duration-300 cursor-pointer focus:outline-none focus:ring-4 focus:ring-red-400/50 flex flex-col justify-between h-full`}
     >
       {/* Inner glass card backdrop */}
       <div className="h-full w-full bg-white/85 dark:bg-slate-900/90 backdrop-blur-md rounded-[22px] p-5 flex flex-col justify-between relative z-10">
         
-        {/* Top Header: ID, Audio Cry, Shiny & Favorite Buttons */}
+        {/* Top Header: ID, 3D Button, Audio Cry, Shiny & Favorite Buttons */}
         <div className="flex items-center justify-between gap-2 z-20">
           <span className="font-mono text-xs font-extrabold px-2.5 py-1 rounded-full bg-slate-200/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 shadow-inner">
             {formatId(pokemon.id)}
           </span>
 
           <div className="flex items-center gap-1.5">
+            {/* 3D Viewer Button */}
+            <button
+              type="button"
+              onClick={handle3DViewClick}
+              title="View in 3D"
+              aria-label={`View ${pokemon.name} in 3D`}
+              className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 cursor-pointer"
+            >
+              <Box className="w-4 h-4" />
+            </button>
+
             {/* Audio Cry Button */}
             {(pokemon.cries?.latest || pokemon.cries?.legacy) && (
               <button

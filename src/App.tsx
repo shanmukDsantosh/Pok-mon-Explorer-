@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { PokemonProvider, usePokemonContext } from './context/PokemonContext';
@@ -9,11 +9,16 @@ import { TypeFilter } from './components/filters/TypeFilter';
 import { SortDropdown } from './components/filters/SortDropdown';
 import { PokemonGrid } from './components/pokemon/PokemonGrid';
 import { PokemonModal } from './components/pokemon/PokemonModal';
+import { Pokemon3DViewer } from './components/pokemon/Pokemon3DViewer';
+import { PokedexLoader } from './components/pokemon/PokedexLoader';
+import { AdvancedPokemonCursor } from './components/cursor/AdvancedPokemonCursor';
 import { fetchPokemonByNameOrId } from './services/pokemonApi';
+import type { Pokemon } from './types/pokemon';
 
 const MainExplorer: React.FC = () => {
   const navigate = useNavigate();
   const { name } = useParams<{ name?: string }>();
+  const [selected3DPokemon, setSelected3DPokemon] = useState<Pokemon | null>(null);
 
   const {
     pokemonList,
@@ -51,7 +56,6 @@ const MainExplorer: React.FC = () => {
       if (match) {
         setSelectedPokemon(match);
       } else {
-        // Fetch directly if not in current grid page
         fetchPokemonByNameOrId(lowercaseName)
           .then((data) => setSelectedPokemon(data))
           .catch(() => setSelectedPokemon(null));
@@ -61,7 +65,7 @@ const MainExplorer: React.FC = () => {
     }
   }, [name, pokemonList, setSelectedPokemon]);
 
-  const handleSelectPokemon = (pokemon: typeof selectedPokemon) => {
+  const handleSelectPokemon = (pokemon: Pokemon) => {
     if (pokemon) {
       setSelectedPokemon(pokemon);
       navigate(`/pokemon/${pokemon.name.toLowerCase()}`);
@@ -76,7 +80,10 @@ const MainExplorer: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 relative">
+      {/* Advanced Animated Pikachu Cursor Follower with Thunder Shock & Attack States */}
+      <AdvancedPokemonCursor />
+
       {/* Header */}
       <Header
         favoritesCount={favorites.length}
@@ -86,10 +93,8 @@ const MainExplorer: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
         {/* Controls & Filter Section */}
         <section className="space-y-6 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-          
           {/* Top Row: Search & Sort Bar */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="w-full md:w-1/2">
@@ -169,6 +174,7 @@ const MainExplorer: React.FC = () => {
             onLoadMore={handleLoadMore}
             onRetry={reload}
             onClearFilters={clearFilters}
+            onOpen3DViewer={(p) => setSelected3DPokemon(p)}
           />
         </section>
       </main>
@@ -182,6 +188,14 @@ const MainExplorer: React.FC = () => {
         onToggleFavorite={toggleFavorite}
         onPrevPokemon={handlePrevPokemon}
         onNextPokemon={handleNextPokemon}
+        onSelectPokemon={handleSelectPokemon}
+      />
+
+      {/* 3D Viewer Modal */}
+      <Pokemon3DViewer
+        pokemon={selected3DPokemon}
+        isOpen={Boolean(selected3DPokemon)}
+        onClose={() => setSelected3DPokemon(null)}
       />
 
       {/* Footer */}
@@ -194,6 +208,8 @@ export default function App() {
   return (
     <ThemeProvider>
       <PokemonProvider>
+        {/* Pokédex Boot Loader Animation */}
+        <PokedexLoader minDurationMs={2000} />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<MainExplorer />} />
